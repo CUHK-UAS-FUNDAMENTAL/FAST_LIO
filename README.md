@@ -205,3 +205,23 @@ The main structure of this UAV is 3d printed (Aluminum or PLA), the .stl file wi
 ## 6.Acknowledgments
 
 Thanks for LOAM(J. Zhang and S. Singh. LOAM: Lidar Odometry and Mapping in Real-time), [Livox_Mapping](https://github.com/Livox-SDK/livox_mapping), [LINS](https://github.com/ChaoqinRobotics/LINS---LiDAR-inertial-SLAM) and [Loam_Livox](https://github.com/hku-mars/loam_livox).
+
+
+## 7. Guo Zixuan improvement
+
+There are some datasets in this folder.
+
+1. 2023-01-10-05-09-07.bag  first-floor
+2. 2023-01-10-05-09-15.bag  ground-floor with -30° row
+3. 2023-01-10-05-12-54.bag  ground-floor
+
+Then we can use map built by ground-floor.bag. 
+and use ground-floor with -30° row to test
+
+
+1. ground-floor -> 2023-01-19-13-14-16.bag
+2. ground-floor with -30° row -> 2023-01-19-13-18-41.bag
+3. localization -> 
+
+build: ground-floor with -30° row
+loc: ground-floor

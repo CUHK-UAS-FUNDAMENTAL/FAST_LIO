@@ -840,20 +840,25 @@ int main(int argc, char** argv)
         cout << "~~~~"<<ROOT_DIR<<" doesn't exist" << endl;
 
 
-    if (pcl::io::loadPCDFile<PointType>(pcd_read_path, *preScanMap) != -1) {
-        ROS_INFO("PCL Map has been loaded");
-        std::cout<<preScanMap->points.size()<<std::endl;
+    // if (pcl::io::loadPCDFile<PointType>(pcd_read_path, *preScanMap) != -1) {
+    //     ROS_INFO("PCL Map has been loaded");
+    //     std::cout<<preScanMap->points.size()<<std::endl;
 
-        downSizeFilterSurf.setInputCloud(preScanMap);
-        downSizeFilterSurf.filter(*preScanMap);
-        std::cout<<preScanMap->points.size()<<std::endl;
+    //     downSizeFilterSurf.setInputCloud(preScanMap);
+    //     downSizeFilterSurf.filter(*preScanMap);
+    //     std::cout<<preScanMap->points.size()<<std::endl;
 
-        map_.reserve(preScanMap->points.size());
+    //     ikdtree.set_downsample_param(filter_size_map_min);
+    //     ikdtree.Build(preScanMap->points);
 
-        for(int i=0; i< preScanMap->points.size();i++){
-            map_.push_back(preScanMap->points[i]);
-        }
-    }
+    //     map_.reserve(preScanMap->points.size());
+
+    //     for(int i=0; i< preScanMap->points.size();i++){
+    //         map_.push_back(preScanMap->points[i]);
+    //     }
+
+        
+    // }
 
 
     /*** ROS subscribe initialization ***/
@@ -933,7 +938,7 @@ int main(int argc, char** argv)
                         }
                         ikdtree.Build(feats_down_world->points);
 
-                        ikdtree.Add_Points(map_,true);
+                        // ikdtree.Add_Points(map_,true);
                     }
                 continue;
 
@@ -994,7 +999,11 @@ int main(int argc, char** argv)
 
             /*** add the feature points to map kdtree ***/
             t3 = omp_get_wtime();
-            map_incremental();
+
+            if(preScanMap->points.size() == 0){
+                map_incremental();
+            }
+            
             t5 = omp_get_wtime();
             
             /******* Publish points *******/
