@@ -142,6 +142,33 @@ geometry_msgs::PoseStamped msg_body_pose;
 shared_ptr<Preprocess> p_pre(new Preprocess());
 shared_ptr<ImuProcess> p_imu(new ImuProcess());
 
+ros::Publisher pubCurrentLaserCloud_;
+
+int count_ = 0;
+
+// void RecordCSVandPCD(const StatesGroup &state, const MeasureGroup& LidarMeasures){
+
+//     ofstream outFile;
+//     outFile.open("/home/gzx/CUHK_workspace/fastlio_ws/src/FAST_LIO/data/ousterPose.csv", ios::out);
+//     Eigen::Matrix4d outT;
+//     outT << state.rot_end, state.pos_end, 0, 0, 0,
+//     LidarMeasures.lidar_beg_time;
+//     outFile << fixed;
+//     for (int j = 0; j < 4; j++)
+//     {
+//     for (int k = 0; k < 4; k++)
+//     outFile << outT(j, k) << ",";
+//     outFile << endl;
+//     }
+//     std::string filename = "/home/gzx/CUHK_workspace/fastlio_ws/src/FAST_LIO/data/" + "full" + to_string(count_) + ".pcd";
+//     pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_body(new pcl::PointCloud<pcl::PointXYZI>);
+//     //V3D Lidar_T_wrt_IMU(Zero3d);
+//     //M3D Lidar_R_wrt_IMU(Eye3d);
+//     //
+//     // transformLidar(Eye3d, Zero3d, feats_undistort, pcl_imu_body);
+//     pcl::io::savePCDFileBinary(filename, *pcl_body);
+// }
+
 void SigHandle(int sig)
 {
     flg_exit = true;
@@ -326,7 +353,7 @@ void livox_pcl_cbk(const livox_ros_driver::CustomMsg::ConstPtr &msg)
     }
 
     PointCloudXYZI::Ptr  ptr(new PointCloudXYZI());
-    p_pre->process(msg, ptr);
+    p_pre->process(msg, pubCurrentLaserCloud_ , ptr);
     lidar_buffer.push_back(ptr);
     time_buffer.push_back(last_timestamp_lidar);
     
@@ -419,6 +446,7 @@ bool sync_packages(MeasureGroup &meas)
     lidar_buffer.pop_front();
     time_buffer.pop_front();
     lidar_pushed = false;
+
     return true;
 }
 
@@ -840,25 +868,27 @@ int main(int argc, char** argv)
         cout << "~~~~"<<ROOT_DIR<<" doesn't exist" << endl;
 
 
-    // if (pcl::io::loadPCDFile<PointType>(pcd_read_path, *preScanMap) != -1) {
-    //     ROS_INFO("PCL Map has been loaded");
-    //     std::cout<<preScanMap->points.size()<<std::endl;
+    if (pcl::io::loadPCDFile<PointType>(pcd_read_path, *preScanMap) != -1) {
+        ROS_INFO("PCL Map has been loaded");
+        std::cout<<preScanMap->points.size()<<std::endl;
 
-    //     downSizeFilterSurf.setInputCloud(preScanMap);
-    //     downSizeFilterSurf.filter(*preScanMap);
-    //     std::cout<<preScanMap->points.size()<<std::endl;
+        downSizeFilterSurf.setInputCloud(preScanMap);
+        downSizeFilterSurf.filter(*preScanMap);
+        std::cout<<preScanMap->points.size()<<std::endl;
 
-    //     ikdtree.set_downsample_param(filter_size_map_min);
-    //     ikdtree.Build(preScanMap->points);
+        ikdtree.set_downsample_param(filter_size_map_min);
+        ikdtree.Build(preScanMap->points);
 
-    //     map_.reserve(preScanMap->points.size());
+        map_.reserve(preScanMap->points.size());
 
-    //     for(int i=0; i< preScanMap->points.size();i++){
-    //         map_.push_back(preScanMap->points[i]);
-    //     }
+        for(int i=0; i< preScanMap->points.size();i++){
+            map_.push_back(preScanMap->points[i]);
+        }
 
-        
-    // }
+        // string all_points_dir(string("/home/gzx/CUHK_workspace/fastlio_ws/src/FAST_LIO/PCD/scans_") + to_string(pcd_index) + string(".pcd"));
+        // pcl::PCDWriter pcd_writer;
+        // pcd_writer.writeBinary(all_points_dir, *preScanMap);
+}
 
 
     /*** ROS subscribe initialization ***/
@@ -868,6 +898,10 @@ int main(int argc, char** argv)
     ros::Subscriber sub_imu = nh.subscribe(imu_topic, 200000, imu_cbk);
     ros::Publisher pubLaserCloudFull = nh.advertise<sensor_msgs::PointCloud2>
             ("/cloud_registered", 100000);
+
+    pubCurrentLaserCloud_ = nh.advertise<sensor_msgs::PointCloud2>
+        ("/mid_360/points", 100000);
+
     ros::Publisher pubLaserCloudFull_body = nh.advertise<sensor_msgs::PointCloud2>
             ("/cloud_registered_body", 100000);
     ros::Publisher pubLaserCloudEffect = nh.advertise<sensor_msgs::PointCloud2>
@@ -938,7 +972,7 @@ int main(int argc, char** argv)
                         }
                         ikdtree.Build(feats_down_world->points);
 
-                        // ikdtree.Add_Points(map_,true);
+                        ikdtree.Add_Points(map_,true);
                     }
                 continue;
 

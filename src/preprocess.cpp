@@ -45,6 +45,24 @@ void Preprocess::process(const livox_ros_driver::CustomMsg::ConstPtr &msg, Point
 {  
   avia_handler(msg);
   *pcl_out = pl_surf;
+  //pl_full
+}
+
+void Preprocess::process(const livox_ros_driver::CustomMsg::ConstPtr &msg,
+                          ros::Publisher pointPub,
+                          PointCloudXYZI::Ptr &pcl_out)
+{  
+  avia_handler(msg);
+  *pcl_out = pl_surf;
+
+  sensor_msgs::PointCloud2 pclOriginMsg;
+  pcl::toROSMsg(pl_full, pclOriginMsg);
+  
+  pclOriginMsg.header.stamp = msg->header.stamp;
+  pclOriginMsg.header.frame_id = "camera_init";
+  pointPub.publish(pclOriginMsg);
+
+  //pl_full
 }
 
 void Preprocess::process(const sensor_msgs::PointCloud2::ConstPtr &msg, PointCloudXYZI::Ptr &pcl_out)
